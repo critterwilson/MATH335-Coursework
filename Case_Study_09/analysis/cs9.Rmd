@@ -1,0 +1,73 @@
+---
+title: "Interacting With Time"
+author: "Christopher Wilson"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:  
+    keep_md: true
+    toc: true
+    toc_float: true
+    code_folding: hide
+    fig_width: 15
+    fig_align: 'center'
+---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r load_libraries, include=FALSE}
+# Use this R-Chunk to load all your libraries!
+#install.packages("tidyverse") # run this line once in console to get package
+pacman::p_load(tidyverse, lubridate, dygraphs, DT, timetk, tidyquant)
+```
+
+```{r load_data}
+# Use this R-Chunk to import all your datasets!
+tickers_today <- c("CXW", "F", "GM", "JCP", "KR", "WDC", "NKE","T", "WDAY", "WFC", "WMT")
+present <- today()
+past <- present - years(5)
+
+dat <- tq_get(tickers_today, get = "stock.prices", from = past, to = present)
+
+```
+
+## Background
+
+_Place Task Background Here_
+
+## Data Wrangling
+
+```{r tidy_data}
+# Use this R-Chunk to clean & wrangle your data!
+
+```
+
+## Data Visualization
+
+```{r plot_data}
+# Use this R-Chunk to plot & visualize your data!
+dat %>% 
+  select(date, close, symbol) %>% 
+  pivot_wider(names_from = symbol, values_from = close) %>% 
+  tk_xts() %>% 
+  dygraph() %>% 
+  dyRangeSelector(height = 20)
+
+dat %>% 
+  ggplot(aes(x = date, y = volume / 10000, color = symbol, fill = symbol)) +
+  geom_line() +
+  facet_wrap(~symbol, ncol = 2) +
+  scale_y_sqrt() +
+  theme_bw() +
+  labs(x = "Date", y = "Volume / 10,000", title = "Volume per Stock",
+       color = "Stock")
+
+  
+```
+
+## Conclusions
+In my visualizations, I chose to use the closing value because I like to know the finishing values of my stocks at the end of the day. In my interactive graph, I am using the range scaler at the bottom to make sure that we can get both general and precise values. 
+
+I am seeing that WDAY did very well overtime but has crashed (along with everyone else) this week. In volumne, however, I am seeing the best values from F and T. 
+

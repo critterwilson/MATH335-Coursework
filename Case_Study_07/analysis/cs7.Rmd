@@ -1,0 +1,68 @@
+---
+title: "Counting Names in Scripture"
+author: "Christopher Wilson"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:  
+    keep_md: true
+    toc: true
+    toc_float: true
+    code_folding: hide
+    fig_height: 6
+    fig_width: 12
+    fig_align: 'center'
+---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r load_libraries, include=FALSE}
+# Use this R-Chunk to load all your libraries!
+#install.packages("tidyverse") # run this line once in console to get package
+pacman::p_load(tidyverse, stringr, stringi, here, rio, splitstackshape)
+
+```
+
+```{r load_data}
+# Use this R-Chunk to import all your datasets!
+scriptures <- import("http://scriptures.nephi.org/downloads/lds-scriptures.csv.zip")
+
+bmnames <- read_rds(gzcon(url("https://byuistats.github.io/M335/data/BoM_SaviorNames.rds")))
+
+```
+
+## Background
+
+In 1978 Susan Easton Black penned an article in the Ensign title Even statistically, he is the dominant figure of the Book of Mormon. which makes some statistical claims about the Book of Mormon. With our “string” skills we are going to check her result and build an improved statistic using using number of words between references.
+
+## Data Wrangling
+
+```{r tidy_data}
+# Use this R-Chunk to clean & wrangle your data!
+#stringr::str_detect()
+#stringr::str_locate_all()
+#stringr::str_replace_all()
+#stringr::str_extract_all()
+#stringi::stri_stats_latex()
+bom_text <- scriptures %>% 
+  filter(volume_short_title == "BoM") %>% 
+  select(c(4, 12, 15:17))
+
+names_regex <- bmnames$name %>% str_c(collapse = "|")
+
+bom_text$scripture_text <- bom_text$scripture_text %>% str_replace_all(names_regex, "/")
+
+split_bom_text <- cSplit(bom_text, "scripture_text", sep = "/", direction = "long") %>%
+  group_by(scripture_text, verse_number) %>% 
+  mutate(word_count = stri_stats_latex(scripture_text)["Words"])
+```
+
+## Data Visualization
+
+```{r plot_data}
+# Use this R-Chunk to plot & visualize your data!
+
+```
+
+## Conclusions

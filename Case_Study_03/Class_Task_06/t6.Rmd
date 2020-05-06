@@ -1,0 +1,98 @@
+---
+title: "CASE STUDY TITLE"
+author: "YOUR NAME"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:  
+    keep_md: true
+    toc: true
+    toc_float: true
+    code_folding: hide
+    image_width: 15
+---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r load_libraries, include=FALSE}
+# Use this R-Chunk to load all your libraries!
+#install.packages("tidyverse") # run this line once in console to get package
+library(tidyverse)
+
+```
+
+```{r load_data}
+# Use this R-Chunk to import all your datasets!
+dat <- nycflights13::flights
+View(dat)
+```
+
+## Background
+
+Before we can start to answer business questions we need to become familiar with our data. Often, you will want to start with the data dictionary. However, you can also just dive into the data and gain understanding based on the variable names and types.
+
+Beyond the variable descriptions is how the variables relate to each other. We can create tables or visualizations that summarize how different variables relate to each other. At this point we are deepeing our understanding as well as beginning our analysis.
+
+Remember: Your job is to become the data expert not the domain expert. You will build domain skills but you are not going to replace domain experts. People will depend on you to have a firm understanding of what data your company has available to answer domain specific questions.
+
+Use nycflights13::flights to practice your data summary and data investigation through visualization skills.
+
+## Data Wrangling
+
+```{r work}
+# Use this R-Chunk to clean & wrangle your data!
+dat_n <- dat %>%
+  group_by(dest, origin, carrier) %>%
+  sample_n(500, replace = TRUE)
+
+##Provide a distributional summary of the relevant variable in nycflights13::flights
+
+
+# carrier, origin, distanc, dest
+# trying to figure out how many NAs are in the data set for delay.
+dat %>%
+  group_by(carrier, origin, dest) %>%
+  summarize(count = n(), distance = mean(distance), 
+            arr_delay_na = arr_delay %>% is.na() %>% sum(),
+            arr_delay = median(arr_delay, na.rm = TRUE),
+            pmissing = arr_delay_na/count,
+            ) %>%
+  ungroup() %>%
+  ggplot(aes(x = pmissing)) +
+  geom_histogram(color = "white") +
+  theme_bw()
+
+delta <- dat %>%
+  filter(carrier == "DL") %>% 
+  select(carrier, month, day, dep_time, sched_dep_time) %>% 
+  group_by(month, day) %>% 
+  mutate(messup = dep_time - sched_dep_time) 
+
+## example from class
+dat %>%
+  ggplot(aes(x = carrier, y = dep_delay)) +
+  geom_boxplot() +
+  scale_y_continuous(lim = c(-10, 30), breaks = c(-5, 0, 25, 60, 120)) +
+  labs(title = "Average Departure Delay per Airlne",
+       x = "Airline", y = "Departure Delay (Minutes)") +
+  theme_bw()
+
+
+dl_pp <- delta %>% 
+  ggplot(aes(x = dep_time, y = messup, color = messup <= 0)) +
+  geom_point() +
+  scale_colour_manual(name = 'Messup <= 0', 
+                      values = setNames(c('green','darkred'),c(T, F))) +
+  labs(title = "Lateness of Delta Flights per Departure",
+       x = "Scheduled Deaprture Time", y = "Number of Minutes off Departure Time" )
+
+
+# just an example.  Bad plot to save.  
+ggsave("hathaway.png", fl_bp)
+ggsave("mine.png", dl_pp)
+
+```
+
+## Conclusions
+

@@ -1,0 +1,12 @@
+name: junk
+title: Junk
+username: wilsoncj
+account: wilsoncj
+server: shiny.byui.edu
+hostUrl: https://shiny.byui.edu/__api__
+appId: 885
+bundleId: 1693
+url: https://shiny.byui.edu/content/885/
+when: 1583776370.00944
+asMultiple: FALSE
+asStatic: TRUE

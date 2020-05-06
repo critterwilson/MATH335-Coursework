@@ -1,0 +1,12 @@
+name: case_study_9
+title: Case Study 9
+username: wilsoncj
+account: wilsoncj
+server: shiny.byui.edu
+hostUrl: https://shiny.byui.edu/__api__
+appId: 930
+bundleId: 1796
+url: https://shiny.byui.edu/content/930/
+when: 1584336776.73509
+asMultiple: FALSE
+asStatic: TRUE

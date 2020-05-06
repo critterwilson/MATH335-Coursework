@@ -1,0 +1,99 @@
+---
+title: "Building the past"
+author: "Christopher Wilson"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:  
+    keep_md: true
+    toc: true
+    toc_float: true
+    code_folding: hide
+    fig_width: 15
+    fig_align: 'center'
+---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r load_libraries, include=FALSE}
+# Use this R-Chunk to load all your libraries!
+#install.packages("tidyverse") # run this line once in console to get package
+pacman::p_load(tidyverse, USAboundaries, USAboundariesData, ggrepel, sf)
+devtools::install_github("hathawayj/buildings", force = TRUE)
+
+```
+
+```{r load_data}
+# Use this R-Chunk to import all your datasets!
+#Get Permit Data
+permits <- buildings::permits %>% 
+  filter(StateAbbr == "ID", variable == "Single Family") %>% 
+  group_by(county, year) %>% 
+  rename(countyfp = county) 
+  
+#Get Idaho Map
+idaho <- us_states() %>% 
+  filter(state_abbr == "ID")
+#Get Idaho Counties
+id_counties <- us_counties(states = 'Idaho') %>% 
+  transform(countyfp = as.numeric(countyfp))
+```
+
+## Background
+
+You have been asked to support a story for the local paper (that has a web presence) that looks back on the housing collapse and the early effects of residential construction. You have data on residential building permits from 1980 through 2010 for each county in the United States. Your colleague that is writing the article would like a few maps and graphics that highlight the single family building permit patterns across your state as well as the patterns in the US.
+
+Remember the big story is the collapse of new building permits at the initial stages of the mortgage crisis. Make sure your graphics highlight the collapse in a clear and honest manner.
+## Data Wrangling
+
+```{r tidy_data}
+# Use this R-Chunk to clean & wrangle your data!
+#Join Permits Data with Idaho Counties
+dat <- left_join(id_counties, permits, by = "countyfp")
+#Get Different Year Data
+dat_03 <- dat %>% 
+  filter(year == "2003")
+dat_04 <- dat %>% 
+  filter(year == "2004")
+dat_05 <- dat %>% 
+  filter(year == "2005")
+dat_07 <- dat %>% 
+  filter(year == "2007")
+dat_09 <- dat %>% 
+  filter(year == "2009")
+```
+
+## Data Visualization
+
+```{r plot_data}
+# Use this R-Chunk to plot & visualize your data!
+#Rise
+ggplot() + 
+  geom_sf(data = idaho, fill = NA, color = "white") +
+  geom_sf(data = dat_03, aes(geometry = geometry, fill = value), color = "white") +
+  geom_sf(data = dat_04, aes(geometry = geometry, fill = value), color = "white") +
+  geom_sf(data = dat_05, aes(geometry = geometry, fill = value), color = "white") +
+  facet_wrap(~year) +
+  labs(title = "Rise of the Housing Bubble",
+       subtitle = "Single Family '03 - '05",
+       fill = "Value") +
+  theme_bw() +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank()) 
+#Fall
+ggplot() + 
+  geom_sf(data = idaho, fill = NA, color = "white") +
+  geom_sf(data = dat_05, aes(geometry = geometry, fill = value), color = "white") +
+  geom_sf(data = dat_07, aes(geometry = geometry, fill = value), color = "white") +
+  geom_sf(data = dat_09, aes(geometry = geometry, fill = value), color = "white") +
+  facet_wrap(~year, nrow = 1) +
+  theme_bw() +
+  labs(title = "Crash of the Housing Bubble",
+       subtitle = "Single Family '05 - '09",
+       fill = "Value") +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank())
+```
+
+## Conclusions

@@ -1,0 +1,88 @@
+---
+title: "Final Coding Challenge"
+author: "Christopher Wilson"
+date: "April 06, 2020"
+output:
+  html_document:  
+    keep_md: true
+    toc: true
+    toc_float: true
+    code_folding: hide
+    fig_width: 20
+    fig_align: 'center'
+---
+
+
+
+
+
+
+```r
+# Use this R-Chunk to import all your datasets!
+csv_file <- here::here("Case_Study_13_exit", "challenge_data.csv")
+dat <- read_csv(csv_file) %>%
+  mutate(Date = mdy(Date)) %>% 
+  filter(Date >= ymd("2020-3-13") & Date <= ymd("2020-3-20")) %>% 
+  mutate(Continent = countrycode(sourcevar = Entity,
+                                 origin = "country.name",
+                                 destination = "continent")) %>%
+  drop_na(Continent)
+
+csv_file_2 <- here::here("Case_Study_13_exit", "challenge_data_2.csv")
+dat_2 <- read_csv(csv_file_2) %>%
+  mutate(Date = mdy(Date)) %>% 
+  filter(Date >= ymd("2020-3-13") & Date <= ymd("2020-3-20")) %>% 
+  arrange(desc(`Total COVID-19 tests`)) %>% 
+  top_n(15)
+```
+
+## Background
+
+_Place Task Background Here_
+
+## Data Wrangling
+
+
+```r
+# Use this R-Chunk to clean & wrangle your data!
+#https://ourworldindata.org/grapher/tests-vs-confirmed-cases-covid-19-per-million
+dat %>% 
+  drop_na(Continent) %>% 
+  ggplot(aes(x = `Total confirmed cases of COVID-19 per million people (cases per million)`, y = `Total COVID-19 tests per million people`, label = Entity, color = Continent)) +
+  geom_point() +
+  geom_text(check_overlap = TRUE, size = 3, color = "black", hjust = 0, vjust = -1) +
+  scale_y_continuous(trans="log10") +
+  scale_x_continuous(trans="log10", breaks = c(1, 10, 100, 1000)) +
+  labs(title = "COVID-19 data as of 20 March: Tests conducted vs. Total confirmed cases per million people", subtitle = "Data collected by Our World in Data from official country reports.\nFor some countries the number of tests corresponds to the number of individuals who have been tested, rather than the number of samples." ) +
+  theme_bw() +
+  theme(axis.line = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank()) +
+  scale_color_tableau()
+```
+
+![](Final-Coding-Challenge_files/figure-html/tidy_data-1.png)<!-- -->
+
+```r
+#https://ourworldindata.org/grapher/covid-19-tests-country
+dat_2 %>% 
+  ggplot(aes(x = reorder(Entity, -`Total COVID-19 tests`), 
+             y = `Total COVID-19 tests`, color = Entity), fill = Entity) +
+  geom_col(stat = "identity") +
+  geom_text(label = paste(dat_2$`Total COVID-19 tests`, " ", dat_2$Date)) +
+  scale_colour_tableau() +
+  coord_flip()
+```
+
+![](Final-Coding-Challenge_files/figure-html/tidy_data-2.png)<!-- -->
+
+## Data Visualization
+
+
+```r
+# Use this R-Chunk to plot & visualize your data!
+```
+
+## Conclusions

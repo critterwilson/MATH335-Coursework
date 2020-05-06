@@ -1,0 +1,1 @@
+read_csv() parses a file, line by line, and converts those lines into a dataframe. It can tell the difference between variables by the comma delimeter.

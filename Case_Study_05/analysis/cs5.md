@@ -1,0 +1,151 @@
+---
+title: "I Can Clean Your Data"
+author: "Christopher Wilson"
+date: "February 18, 2020"
+output:
+  html_document:  
+    keep_md: true
+    toc: true
+    toc_float: true
+    code_folding: hide
+    fig_width: 15
+    fig_align: 'center'
+---
+
+
+
+
+
+
+```r
+# Use this R-Chunk to import all your datasets!
+tmp <- tempfile()
+download("https://byuistats.github.io/M335/data/heights/Height.xlsx", tmp, mode = "wb",)
+tubingen_xlsx <- read_xlsx(tmp, skip = 2)
+#View(tubingen_xlsx)
+
+male_conscripts_bavaria <- read_dta(url("https://byuistats.github.io/M335/data/heights/germanconscr.dta"))
+#View(male_conscripts_bavaria)
+
+male_conscripts_bavaria_height <- read_dta(url("https://byuistats.github.io/M335/data/heights/germanprison.dta"))
+#View(male_conscripts_bavaria_height)
+
+heights_south_east_west <- read.dbf("/Users/CritterWilson/Documents/BYU-I/Software Engineering/MATH335/M335_WI20_Wilson_Chri/Data/Heights_south-east/B6090.DBF")
+#View(heights_south_east_west)
+
+wage_and_height <- read_csv(url("https://github.com/hadley/r4ds/raw/master/data/heights.csv"))
+#View(wage_and_height)
+
+wisconsin_height <- read_sav(url("http://www.ssc.wisc.edu/nsfh/wave3/NSFH3%20Apr%202005%20release/main05022005.sav"))
+#View(wisconsin_height)
+
+wisconsin_household <- read_sav(url("http://www.ssc.wisc.edu/nsfh/wave3/NSFH3%20Apr%202005%20release/nsfh3mainroster1-04042005.sav"))
+#View(wisconsin_household)
+```
+
+## Background
+
+The Scientific American argues that humans have been getting taller over the years. As the data scientists that we are becoming, we would like to find data that validates this concept. Our challenge is to show different male heights across the centuries.
+
+This project is not as severe as the two quotes below, but it will give you a taste of pulling various data and file formats together into “tidy” data for visualization and analysis. You will not need to search for data as all the files are listed here
+
+“Classroom data are like teddy bears and real data are like a grizzly bear with salmon blood dripping out its mouth.” - Jenny Bryan
+“Up to 80% of data analysis is spent on the process of cleaning and preparing data” - Hadley Wickham
+
+## Data Wrangling
+
+
+```r
+# Use this R-Chunk to clean & wrangle your data!
+tubingen_xlsx <- tubingen_xlsx %>% 
+  pivot_longer('1800':'2011', names_to = "year", values_to = "height") %>%
+  drop_na(height) %>% 
+  mutate(height_in = height / 2.54) %>% 
+  rename(country = `Continent, Region, Country`) %>% 
+  select(-Code)
+
+# birth_year, height.cm, height.in, study_id
+tidy_data <- wage_and_height %>% 
+  mutate(birth_year = as.integer(1950)) %>% 
+  mutate(height.cm = height * 2.54) %>% 
+  rename(height.in = height) %>% 
+  mutate(study_id = "bls") %>% 
+  select(birth_year, height.in, height.cm, study_id)
+  
+tidy_data1 <- heights_south_east_west %>% 
+  mutate(height.cm = CMETER) %>% 
+  mutate(height.in = height.cm / 2.54) %>% 
+  rename(birth_year = GEBJ) %>% 
+  mutate(study_id = "g_soldier_se_sw") %>% 
+  select(birth_year, height.in, height.cm, study_id)
+
+tidy_data2 <- wisconsin_height %>% 
+  mutate(RT216I = RT216I / 12) %>%
+  mutate(RT216F = (RT216F + RT216I) * 12) %>% 
+  mutate(birth_year = as.integer(DOBY + 1900)) %>% 
+  mutate(height.in = (RT216I + RT216F)) %>% 
+  mutate(height.cm = height.in * 2.54) %>% 
+  mutate(study_id = "wis") %>% 
+  select(birth_year, height.in, height.cm, study_id)
+
+tidy_data3 <- male_conscripts_bavaria %>% 
+  mutate(birth_year = as.integer(bdec - age)) %>% 
+  mutate(height.in = height / 2.54) %>% 
+  rename(height.cm = height) %>% 
+  mutate(study_id = "g_soldier") %>% 
+  select(birth_year, height.in, height.cm, study_id)
+
+tidy_data4 <- male_conscripts_bavaria_height %>% 
+  mutate(birth_year = as.integer(bdec - age)) %>% 
+  mutate(height.in = height / 2.54) %>% 
+  rename(height.cm = height) %>% 
+  mutate(study_id = "b_soldier") %>% 
+  select(birth_year, height.in, height.cm, study_id)
+
+tidy_dat <- bind_rows(tidy_data, tidy_data1, tidy_data2, tidy_data3, tidy_data4)
+
+tidy_dat <- tidy_dat %>% 
+  #mutate(study_id = as.integer(rownames(tidy_dat))) %>% 
+  filter(height.in > 48 & height.in < 108)
+
+here()
+```
+
+```
+## [1] "/Users/CritterWilson/Documents/BYU-I/Software Engineering/MATH335/M335_WI20_Wilson_Chri"
+```
+
+```r
+saveRDS(tubingen_xlsx, "tubingen.rds")
+saveRDS(tidy_dat, "height.rds")
+```
+
+## Data Visualization
+
+
+```r
+# Use this R-Chunk to plot & visualize your data!
+tubingen_xlsx %>% 
+  ggplot(aes(x = year, y = height_in)) +
+  geom_boxplot() +
+  geom_point(data = filter(tubingen_xlsx, country == "Germany"),
+             aes(x = year, y = height_in), color = "red",
+             size = 2.5) +
+  labs(title = "Average Male German Heights Over Time", 
+       x = "Decade", y = "Height (in.)") +
+  theme_bw()
+```
+
+![](cs5_files/figure-html/plot_data-1.png)<!-- -->
+
+```r
+tidy_dat %>% 
+  ggplot(aes(x = birth_year, y = height.in, color = study_id)) +
+  geom_boxplot() +
+  facet_grid(~study_id, scales = "free") +
+  theme_bw()
+```
+
+![](cs5_files/figure-html/plot_data-2.png)<!-- -->
+
+## Conclusions

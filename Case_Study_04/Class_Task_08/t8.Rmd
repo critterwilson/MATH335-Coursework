@@ -1,0 +1,98 @@
+---
+title: "CASE STUDY TITLE"
+author: "YOUR NAME"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:  
+    keep_md: true
+    toc: true
+    toc_float: true
+    code_folding: hide
+    fig_width: 15
+    fig_align: 'center'
+---
+
+```{r, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r load_libraries, include=FALSE}
+# Use this R-Chunk to load all your libraries!
+#install.packages("tidyverse") # run this line once in console to get package
+library(tidyverse)
+
+```
+
+```{r load_data}
+# Use this R-Chunk to import all your datasets!
+# need child_mort, health_exp_total, life_expectancy, year, country, continent
+dat <- ourworldindata::financing_healthcare %>% 
+  as_tibble() %>% 
+  select(year, continent, country, child_mort, health_exp_total, life_expectancy)
+
+View(dat)
+```
+
+## Background
+
+The Our World in Data website has world data. It is nice that they have provided graphics and then the data that they used to generate the graphics. Once again, we are going to build visualizations in R using their data.
+
+## Reading
+
+Variation - the amount of change in one variable
+Covariation - the tendency of multiple variables to variate in similar ways at the same time
+
+"EDA is fundamentally a creative process. And like most creative processes, the key to asking quality questions is to generate a large quantity of questions.
+  What type of variation occurs within my variables?
+  What type of covariation occurs between my variables?"
+
+```{r code}
+# Use this R-Chunk to clean & wrangle your data!
+dat %>% 
+  ggplot(aes(x = year, y = child_mort)) +
+  geom_point()
+
+dat %>% 
+  filter(year < 1799) %>% 
+  group_by(country) %>% 
+  summarize(count = n(), count_na = sum(is.na(child_mort)))
+
+dat %>% 
+  filter(year < 1785) %>% 
+  group_by(country) %>% 
+  summarize(count = n(), count_na = sum(is.na(child_mort)))
+
+dat %>% 
+  group_by(country, year) %>% 
+  summarize(count = n(), count_na = sum(is.na(child_mort)))
+
+dat %>% 
+  group_by(year) %>% 
+  summarize(count = n(), count_na = sum(is.na(child_mort)))
+
+dat_label <- tibble(continent = c("Africa", "Americas", "Asia", "Europe", "Oceania"), 
+                    year = 1942, child_mort = 580, 
+                    label = c(NA, NA, NA, "Ukraine: Joseph Stalin", NA))
+
+
+dat %>%
+  filter(year > 1925, !is.na(continent)) %>%
+  ggplot(aes(x = year, y = child_mort)) +
+  geom_line(aes(group = country), color = "darkgrey") +
+  geom_point(color = "grey") +
+  facet_wrap(~continent, nrow = 1) +
+  theme_bw() +
+  geom_smooth(se = FALSE) +
+  scale_color_brewer(type = "qual") +
+  geom_text(data = dat_label, aes(label = label), 
+            size = 3, nudge_x = 30, color = "black")
+
+```
+
+
+## Checklist
+[x] Take notes on your reading of the specified ‘R for Data Science’ chapter in the README.md or in a ‘.R’ script in the class task folder
+[x] Explore the world data on financing_healthcare and create an interesting graphic that highlights this dataset in relation to child mortality.
+  [x] Use devtools::install_github("drsimonj/ourworldindata") to get a larger dataset on financing_healthcare
+  [x] Create a graphic that you could use in a final presentation to summarize world child mortality (child_mort column)
+[x] Push your .Rmd, .md, and .html to your GitHub repo
